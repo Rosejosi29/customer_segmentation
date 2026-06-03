@@ -90,9 +90,13 @@ The model identified five customer segments:
 
 Segment	Characteristics	Recommendation
 Cluster 0	Average income & spending	Seasonal campaigns, referral programs
+
 Cluster 1	High income, high spending	Loyalty programs, premium offers
+
 Cluster 2	Low income, high spending	Discounts, coupons, value bundles
+
 Cluster 3	High income, low spending	Personalised promotions, product recs
+
 Cluster 4	Low income, low spending	Budget‑focused plans, essential products
 
 These insights enable targeted marketing strategies to improve customer satisfaction and sales.
