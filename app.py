@@ -20,8 +20,9 @@ kmeans, scaler = load_model()
 # Title and description
 st.title("Customer Segmentation App")
 st.markdown("""
-This app helpS businesses understand their customers by grouping them into segments
+This app helps businesses understand their customers by grouping them into segments
 based on their income and spending behavior.
+
 
 Enter a customer's details below to see which segment they belong to, along with business recommendations.
 """)
@@ -88,7 +89,7 @@ if st.button("Predict Customer Segment", type="primary"):
     st.caption(f"*Centroid of Cluster {cluster}: Income ≈ {centroids[cluster][0]*scaler.scale_[0] + scaler.mean_[0]:.1f}k$, Spending ≈ {centroids[cluster][1]*scaler.scale_[1] + scaler.mean_[1]:.1f}*")
 
 # Sidebar with team info
-st.sidebar.header("👥 Group 19 Members")
+st.sidebar.header("Group 19 Members")
 st.sidebar.markdown("""
 - RUTH  
 - TUNDE  
