@@ -98,4 +98,4 @@ Cluster 4	Low income, low spending	Budget‑focused plans, essential products
 These insights enable targeted marketing strategies to improve customer satisfaction and sales.
 
 Group 19 – Capstone Machine Learning Project
-Course: AI/Machine Learning | Date: 4th une 2026
+Course: AI/Machine Learning | Date: 4th June 2026
