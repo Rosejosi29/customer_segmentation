@@ -18,11 +18,10 @@ def load_model():
 kmeans, scaler = load_model()
 
 # Title and description
-st.title("🛍️ Customer Segmentation App – Group 19")
+st.title("Customer Segmentation App")
 st.markdown("""
-This app uses **K-Means clustering** to segment customers based on:
-- **Annual Income (k$)**  
-- **Spending Score (1-100)**
+This app helpS businesses understand their customers by grouping them into segments
+based on their income and spending behavior.
 
 Enter a customer's details below to see which segment they belong to, along with business recommendations.
 """)
@@ -35,7 +34,7 @@ with col2:
     spending = st.slider("💳 Spending Score (1-100)", min_value=1, max_value=100, value=50, step=1)
 
 # Prediction button
-if st.button("🔮 Predict Customer Segment", type="primary"):
+if st.button("Predict Customer Segment", type="primary"):
     # Scale the input using the same scaler
     input_data = np.array([[income, spending]])
     input_scaled = scaler.transform(input_data)
@@ -46,11 +45,11 @@ if st.button("🔮 Predict Customer Segment", type="primary"):
     
     # Interpretation based on project's analysis
     cluster_labels = {
-        0: "💎 **Premium Spenders** – High income, high spending. Target with loyalty programs and exclusive offers.",
-        1: "🛒 **Mid-Range Shoppers** – Average income, average spending. Engage with seasonal campaigns and referral rewards.",
-        2: "🎯 **Discount Seekers** – Low income, high spending. Respond well to coupons, flash sales, and value bundles.",
-        3: "👑 **Potential Activators** – High income, low spending. Need personalised promotions or product recommendations.",
-        4: "📉 **Budget Conscious** – Low income, low spending. Focus on essential products and basic plans."
+        0: " **Premium Spenders** – High income, high spending. Target with loyalty programs and exclusive offers.",
+        1: " **Mid-Range Shoppers** – Average income, average spending. Engage with seasonal campaigns and referral rewards.",
+        2: " **Discount Seekers** – Low income, high spending. Respond well to coupons, flash sales, and value bundles.",
+        3: " **Potential Activators** – High income, low spending. Need personalised promotions or product recommendations.",
+        4: " **Budget Conscious** – Low income, low spending. Focus on essential products and basic plans."
     }
     st.info(cluster_labels.get(cluster, "Explore this segment further."))
     
