@@ -132,7 +132,7 @@ def enrich_dataframe(df, clusters):
 # Sidebar
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/4290/4290854.png", width=70)
-    st.title("⚙️ Controls")
+    st.title(" CONTROLS")
     input_mode = st.radio(
         "Choose input method:",
         ["✏️ Single Customer", "📝 Batch (Manual Entry)", "📂 Batch (CSV Upload)"]
