@@ -38,11 +38,10 @@ def load_models():
 
 kmeans, scaler = load_models()
 
-# Cluster profiles (renamed "Potential Activators" -> "High‑Income, Low‑Spend")
+# Cluster profiles (no cluster numbers shown to users)
 CLUSTER_PROFILES = {
     0: {
         "name": "💰 Premium Spenders",
-        "color": "#2E86C1",
         "summary": "High income, high spending – your most valuable segment.",
         "behavior_points": [
             "Luxury oriented and brand loyal",
@@ -58,7 +57,6 @@ CLUSTER_PROFILES = {
     },
     1: {
         "name": "🛒 Mid-Range Shoppers",
-        "color": "#28B463",
         "summary": "Average income, average spending – stable and large base.",
         "behavior_points": [
             "Value seekers – compare prices",
@@ -74,7 +72,6 @@ CLUSTER_PROFILES = {
     },
     2: {
         "name": "🏷️ Discount Seekers",
-        "color": "#E67E22",
         "summary": "Low income, high spending – deal hunters.",
         "behavior_points": [
             "Highly price sensitive",
@@ -90,7 +87,6 @@ CLUSTER_PROFILES = {
     },
     3: {
         "name": "👑 High‑Income, Low‑Spend",
-        "color": "#8E44AD",
         "summary": "High income, low spending – untapped potential.",
         "behavior_points": [
             "Not yet engaged – may be new customers",
@@ -106,7 +102,6 @@ CLUSTER_PROFILES = {
     },
     4: {
         "name": "📉 Budget Conscious",
-        "color": "#E74C3C",
         "summary": "Low income, low spending – essential buyers.",
         "behavior_points": [
             "Need‑based purchasing only",
@@ -129,7 +124,7 @@ def predict_batch(data_df):
 
 def enrich_dataframe(df, clusters):
     df_out = df.copy()
-    df_out['Cluster'] = clusters
+    df_out['Cluster'] = clusters  # keep internally, not shown to user
     df_out['Segment'] = df_out['Cluster'].map(lambda c: CLUSTER_PROFILES[c]["name"])
     df_out['Summary'] = df_out['Cluster'].map(lambda c: CLUSTER_PROFILES[c]["summary"])
     return df_out
@@ -147,9 +142,9 @@ with st.sidebar:
     st.write("RUTH, TUNDE, MUSA, ROSELINE, MELODY, MARGARET, PROMISE")
     st.caption("Capstone Project – June 2026")
 
-# Main title
+# Main title with improved description
 st.title("🎯 Customer Segmentation & Marketing Engine")
-st.markdown("Group customers based on income & spending, then receive **targeted marketing strategies**.")
+st.markdown("This model helps group customers based on their **annual income** and **spending score**. Each segment receives a tailored marketing strategy.")
 
 # ==========================================
 # MODE 1: SINGLE CUSTOMER
@@ -167,13 +162,12 @@ if input_mode == "✏️ Single Customer":
         cluster = clusters[0]
         profile = CLUSTER_PROFILES[cluster]
         
-        st.success(f"### 🎯 Customer Segment: {profile['name']} (Cluster {cluster})")
+        # No mention of cluster number
+        st.success(f"### 🎯 Customer Segment: {profile['name']}")
         
-        # Metrics row
-        col_a, col_b, col_c = st.columns(3)
+        col_a, col_b = st.columns(2)
         col_a.metric("Income", f"${income}k")
         col_b.metric("Spending Score", f"{spending}/100")
-        col_c.metric("Segment", cluster)
         
         st.markdown("---")
         st.subheader("📌 Segment Summary")
@@ -186,12 +180,6 @@ if input_mode == "✏️ Single Customer":
         st.subheader("🎯 Recommended Marketing Strategy")
         for point in profile['marketing_points']:
             st.markdown(f"- {point}")
-        
-        # Centroid comparison
-        centroid = kmeans.cluster_centers_[cluster]
-        orig_income = centroid[0] * scaler.scale_[0] + scaler.mean_[0]
-        orig_spending = centroid[1] * scaler.scale_[1] + scaler.mean_[1]
-        st.caption(f"📊 Segment centre: Income ≈ {orig_income:.1f}k$, Spending ≈ {orig_spending:.1f}")
 
 # ==========================================
 # MODE 2: BATCH MANUAL (TEXT AREA)
@@ -236,21 +224,17 @@ elif input_mode == "📝 Batch (Manual Entry)":
                 clusters = predict_batch(df)
                 enriched = enrich_dataframe(df, clusters)
                 
-                # Summary metrics
-                st.success(f"Processed {len(customers)} customers")
+                st.success(f"✅ Processed {len(customers)} customers")
                 col1, col2 = st.columns(2)
                 col1.metric("Unique Segments", enriched['Cluster'].nunique())
                 col2.metric("Most Common Segment", enriched['Segment'].mode()[0] if not enriched.empty else "N/A")
                 
-                # Show results table
-                st.subheader("📋 Segmentation Results")
+                st.subheader("📋 Quick View")
                 st.dataframe(enriched[['Annual Income (k$)', 'Spending Score (1-100)', 'Segment', 'Summary']], use_container_width=True)
                 
-                # Download button
                 csv = enriched.to_csv(index=False)
                 st.download_button("💾 Download Results CSV", csv, "segmentation_results.csv", "text/csv")
                 
-                # For each customer, show expandable details
                 st.subheader("🔍 Detailed Recommendations (click to expand)")
                 for idx, row in enriched.iterrows():
                     with st.expander(f"Customer {idx+1}: Income ${row['Annual Income (k$)']}k, Spending {row['Spending Score (1-100)']}"):
@@ -265,7 +249,7 @@ elif input_mode == "📝 Batch (Manual Entry)":
                             st.markdown(f"- {mp}")
 
 # ==========================================
-# MODE 3: CSV UPLOAD
+# MODE 3: CSV UPLOAD – NOW WITH DETAILED RECOMMENDATIONS FOR EVERY CUSTOMER
 # ==========================================
 else:
     st.markdown("### Upload CSV file")
@@ -286,28 +270,37 @@ else:
                 clusters = predict_batch(df)
                 enriched = enrich_dataframe(df, clusters)
             
-            st.success("Segmentation complete!")
+            st.success(f"✅ Segmentation complete! Processed {len(enriched)} customers.")
             
-            # Metrics
             col1, col2, col3 = st.columns(3)
             col1.metric("Total Customers", len(enriched))
             col2.metric("Unique Segments", enriched['Cluster'].nunique())
             col3.metric("Most Common Segment", enriched['Segment'].mode()[0] if not enriched.empty else "N/A")
             
-            # Full table
-            st.subheader("📋 Detailed Results (first 100 rows)")
+            st.subheader("📋 Quick View (first 100 rows)")
             st.dataframe(enriched[['Annual Income (k$)', 'Spending Score (1-100)', 'Segment', 'Summary']].head(100), use_container_width=True)
             
-            # Download
             csv_data = enriched.to_csv(index=False)
             st.download_button("💾 Download Full Results CSV", csv_data, "segmented_customers.csv", "text/csv")
             
-            # Spotlight on the most common segment
-            top_cluster = enriched['Cluster'].mode()[0]
-            st.subheader(f"🎯 Spotlight on {CLUSTER_PROFILES[top_cluster]['name']}")
-            st.markdown(f"**Summary:** {CLUSTER_PROFILES[top_cluster]['summary']}")
-            st.markdown("**Recommended Marketing Actions:**")
-            for mp in CLUSTER_PROFILES[top_cluster]['marketing_points']:
-                st.markdown(f"- {mp}")
+            # Detailed recommendations for ALL customers (with expanders)
+            st.subheader("🔍 Detailed Recommendations for All Customers (click to expand)")
+            # Limit to first 200 to avoid performance issues, but show all if less
+            max_display = len(enriched)
+            for idx in range(min(max_display, len(enriched))):
+                row = enriched.iloc[idx]
+                with st.expander(f"Customer {idx+1}: Income ${row['Annual Income (k$)']}k, Spending {row['Spending Score (1-100)']}"):
+                    profile = CLUSTER_PROFILES[row['Cluster']]
+                    st.markdown(f"**Segment:** {profile['name']}")
+                    st.markdown(f"**Summary:** {profile['summary']}")
+                    st.markdown("**Behaviour:**")
+                    for bp in profile['behavior_points']:
+                        st.markdown(f"- {bp}")
+                    st.markdown("**Marketing Strategy:**")
+                    for mp in profile['marketing_points']:
+                        st.markdown(f"- {mp}")
+            
+            if len(enriched) > 200:
+                st.info(f"Showing first 200 customers. Download the CSV for full details on all {len(enriched)} customers.")
 
-# No footer at all (removed)
+# No footer
