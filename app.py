@@ -65,7 +65,7 @@ CLUSTER_PROFILES = {
         ],
         "marketing_points": [
             "Seasonal campaigns (e.g., summer sale, Black Friday)",
-            "Referral rewards (give $10, get $10)",
+            "Referral rewards (e.g., refer a friend and you both get 10% off)",
             "Email newsletters with curated mid‑range products",
             "Loyalty points on every purchase"
         ]
