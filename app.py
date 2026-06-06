@@ -152,9 +152,9 @@ st.markdown("This model helps group customers based on their **annual income** a
 if input_mode == "✏️ Single Customer":
     col1, col2 = st.columns(2)
     with col1:
-        income = st.number_input("💰 Annual Income (k$)", min_value=0.0, max_value=20,000.0, value=60.0, step=1.0)
+        income = st.number_input("💰 Annual Income (k$)", min_value=0.0, max_value=20000.0, value=60.0, step=1.0)
     with col2:
-        spending = st.number_input("💳 Spending Score (1-100)", min_value=0.0, max_value=20,000.0, value=50.0, step=1.0)
+        spending = st.number_input("💳 Spending Score (1-100)", min_value=0.0, max_value=20000.0, value=50.0, step=1.0)
     
     if st.button("🔮 Predict Segment", use_container_width=True):
         input_df = pd.DataFrame([[income, spending]], columns=['Annual Income (k$)', 'Spending Score (1-100)'])
