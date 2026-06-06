@@ -2,8 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-import matplotlib.pyplot as plt
-import seaborn as sns
 
 # Set page configuration (must be the first Streamlit command)
 st.set_page_config(page_title="Customer Segmentation Group 19", layout="centered")
@@ -18,78 +16,145 @@ def load_model():
 kmeans, scaler = load_model()
 
 # Title and description
-st.title("Customer Segmentation App")
+st.title("🛍️ Customer Segmentation App – Group 19")
 st.markdown("""
 This app helps businesses understand their customers by grouping them into segments
-based on their income and spending behavior.
+based on their **Annual Income (k$)** and **Spending Score (1-100)**.
 
-
-Enter a customer's details below to see which segment they belong to, along with business recommendations.
+Enter multiple customers (one per line) below to see their cluster and a detailed marketing profile.
 """)
 
-# Input sliders
-col1, col2 = st.columns(2)
-with col1:
-    income = st.slider("💰 Annual Income (k$)", min_value=15, max_value=140, value=60, step=1)
-with col2:
-    spending = st.slider("💳 Spending Score (1-100)", min_value=1, max_value=100, value=50, step=1)
+# Batch input: text area for multiple customers
+st.subheader("📋 Enter Customer Data")
+st.markdown("Format each line as: `Income, Spending` (e.g., `60, 50`)")
+
+input_text = st.text_area(
+    "Customer list (one per line)",
+    height=150,
+    placeholder="60, 50\n90, 85\n25, 80\n88, 15\n26, 20"
+)
 
 # Prediction button
-if st.button("Predict Customer Segment", type="primary"):
-    # Scale the input using the same scaler
-    input_data = np.array([[income, spending]])
-    input_scaled = scaler.transform(input_data)
-    cluster = kmeans.predict(input_scaled)[0]
-    
-    # Show result
-    st.success(f"### This customer belongs to **Cluster {cluster}**")
-    
-    # Interpretation based on project's analysis
-    cluster_labels = {
-        0: " **Premium Spenders** – High income, high spending. Target with loyalty programs and exclusive offers.",
-        1: " **Mid-Range Shoppers** – Average income, average spending. Engage with seasonal campaigns and referral rewards.",
-        2: " **Discount Seekers** – Low income, high spending. Respond well to coupons, flash sales, and value bundles.",
-        3: " **Potential Activators** – High income, low spending. Need personalised promotions or product recommendations.",
-        4: " **Budget Conscious** – Low income, low spending. Focus on essential products and basic plans."
-    }
-    st.info(cluster_labels.get(cluster, "Explore this segment further."))
-    
-    # Visualisation: show all clusters and highlight the new point
-    try:
-        # Load original dataset to plot all points
-        df = pd.read_csv("Mall_Customers.csv")
-        # Predict clusters for all points to colour them
-        X = df[['Annual Income (k$)', 'Spending Score (1-100)']]
-        X_scaled = scaler.transform(X)
-        df['Cluster'] = kmeans.predict(X_scaled)
+if st.button("🔮 Predict Customer Segments", type="primary"):
+    if not input_text.strip():
+        st.error("Please enter at least one customer in the text area.")
+    else:
+        # Parse input lines
+        lines = input_text.strip().split('\n')
+        customers = []
+        valid_lines = []
+        errors = []
         
-        fig, ax = plt.subplots(figsize=(8, 6))
-        scatter = sns.scatterplot(
-            data=df, 
-            x='Annual Income (k$)', 
-            y='Spending Score (1-100)',
-            hue='Cluster', 
-            palette='viridis', 
-            alpha=0.6,
-            s=80,
-            ax=ax
-        )
-        # Highlight the new customer point
-        ax.scatter(income, spending, color='red', s=200, edgecolor='black', 
-                   marker='X', label='Your Customer', zorder=5)
-        ax.set_title("Customer Segments (Clusters)")
-        ax.legend()
-        st.pyplot(fig)
+        for idx, line in enumerate(lines, 1):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                parts = line.split(',')
+                if len(parts) != 2:
+                    errors.append(f"Line {idx}: '{line}' - Expected two values separated by comma")
+                    continue
+                income = float(parts[0].strip())
+                spending = float(parts[1].strip())
+                # Validate ranges
+                if income < 15 or income > 140:
+                    errors.append(f"Line {idx}: Income {income} is outside valid range (15-140)")
+                if spending < 1 or spending > 100:
+                    errors.append(f"Line {idx}: Spending {spending} is outside valid range (1-100)")
+                customers.append((income, spending))
+                valid_lines.append(idx)
+            except ValueError:
+                errors.append(f"Line {idx}: '{line}' - Invalid numbers")
         
-    except FileNotFoundError:
-        st.warning("⚠️ Dataset 'Mall_Customers.csv' not found. Can't show the full cluster plot, but prediction is still valid.")
-    
-    # Show centroid coordinates for the cluster
-    centroids = kmeans.cluster_centers_
-    st.caption(f"*Centroid of Cluster {cluster}: Income ≈ {centroids[cluster][0]*scaler.scale_[0] + scaler.mean_[0]:.1f}k$, Spending ≈ {centroids[cluster][1]*scaler.scale_[1] + scaler.mean_[1]:.1f}*")
+        if errors:
+            for err in errors:
+                st.warning(err)
+        
+        if customers:
+            # Prepare batch prediction
+            input_array = np.array(customers)
+            input_scaled = scaler.transform(input_array)
+            clusters = kmeans.predict(input_scaled)
+            
+            # Cluster descriptions with detailed summaries
+            cluster_details = {
+                0: {
+                    "name": "Premium Spenders",
+                    "summary": "High income, high spending. These customers are your most valuable segment. They have disposable income and enjoy spending on quality products.",
+                    "behavior": "They respond well to premium products, luxury offers, and exclusive experiences. They are brand-loyal if treated well.",
+                    "target_market": "Loyalty programs, VIP events, early access to new collections, premium bundles, and personalised concierge services."
+                },
+                1: {
+                    "name": "Mid-Range Shoppers",
+                    "summary": "Average income, average spending. This is your largest and most stable customer base.",
+                    "behavior": "They seek value for money. They are practical shoppers who compare options before purchasing.",
+                    "target_market": "Seasonal campaigns, referral rewards, cashback offers, and mid-tier product bundles. Engage with email newsletters and social media promotions."
+                },
+                2: {
+                    "name": "Discount Seekers",
+                    "summary": "Low income, high spending. They spend a significant portion of their income on shopping, often driven by deals.",
+                    "behavior": "Highly price-sensitive. They are attracted to discounts, flash sales, coupons, and value packs.",
+                    "target_market": "Frequent discount alerts, BOGO (buy one get one) offers, loyalty points on every purchase, and budget-friendly product lines."
+                },
+                3: {
+                    "name": "Potential Activators",
+                    "summary": "High income, low spending. They have the means but are not yet engaged to spend.",
+                    "behavior": "They may be new customers, or they haven't found products that excite them. They need persuasion.",
+                    "target_market": "Personalised product recommendations, first-purchase discounts, free samples, and educational content about product benefits. Re-engagement campaigns."
+                },
+                4: {
+                    "name": "Budget Conscious",
+                    "summary": "Low income, low spending. They are very careful with their money and only buy essentials.",
+                    "behavior": "They prioritise needs over wants. Price is the main decision factor.",
+                    "target_market": "Essential products at lowest prices, bulk discounts, subscription for staples, and community loyalty programs. Focus on trust and reliability."
+                }
+            }
+            
+            # Prepare results table
+            results_data = []
+            for i, (income, spending) in enumerate(customers):
+                cluster = clusters[i]
+                details = cluster_details[cluster]
+                results_data.append({
+                    "Income (k$)": income,
+                    "Spending Score": spending,
+                    "Cluster": cluster,
+                    "Segment Name": details["name"],
+                    "Summary": details["summary"],
+                    "Spending Behaviour": details["behavior"],
+                    "Target Market Strategy": details["target_market"]
+                })
+            
+            results_df = pd.DataFrame(results_data)
+            
+            # Display results
+            st.success(f"✅ Processed {len(customers)} customer(s)")
+            st.subheader("📊 Customer Segmentation Results")
+            
+            # Show table
+            st.dataframe(results_df, use_container_width=True)
+            
+            # Optional: Show detailed breakdown per customer (expandable)
+            for idx, row in results_df.iterrows():
+                with st.expander(f"Customer {idx+1}: Income {row['Income (k$)']}k$, Spending {row['Spending Score']}"):
+                    st.markdown(f"**Segment:** {row['Segment Name']} (Cluster {row['Cluster']})")
+                    st.markdown(f"**📌 Summary:** {row['Summary']}")
+                    st.markdown(f"**🛒 Spending Behaviour:** {row['Spending Behaviour']}")
+                    st.markdown(f"**🎯 Target Market Structure:** {row['Target Market Strategy']}")
+            
+            # Add download button for results
+            csv = results_df.to_csv(index=False)
+            st.download_button(
+                label="📥 Download Results as CSV",
+                data=csv,
+                file_name="customer_segmentation_results.csv",
+                mime="text/csv"
+            )
+        else:
+            st.error("No valid customers to process. Please check the format and ranges.")
 
 # Sidebar with team info
-st.sidebar.header("Group 19 Members")
+st.sidebar.header("👥 Group 19 Members")
 st.sidebar.markdown("""
 - RUTH  
 - TUNDE  
@@ -102,3 +167,11 @@ st.sidebar.markdown("""
 st.sidebar.markdown("---")
 st.sidebar.markdown("📅 **Date:** 4th June 2026")
 st.sidebar.markdown("📘 **Course:** AI/Machine Learning – Capstone Project")
+st.sidebar.markdown("---")
+st.sidebar.markdown("### ℹ️ How to use")
+st.sidebar.markdown("""
+1. Enter one customer per line: `income, spending`
+2. Click **Predict Customer Segments**
+3. View the results table and detailed profiles
+4. Download results as CSV if needed
+""")
