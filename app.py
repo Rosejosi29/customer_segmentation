@@ -143,7 +143,7 @@ with st.sidebar:
     st.caption("Capstone Project – June 2026")
 
 # Main title with improved description
-st.title("🎯 Customer Segmentation & Marketing Engine")
+st.title(" Customer Segmentation & Marketing Engine")
 st.markdown("This model helps group customers based on their **annual income** and **spending score**. Each segment receives a tailored marketing strategy.")
 
 # ==========================================
@@ -177,7 +177,7 @@ if input_mode == "✏️ Single Customer":
         for point in profile['behavior_points']:
             st.markdown(f"- {point}")
         
-        st.subheader("🎯 Recommended Marketing Strategy")
+        st.subheader(" Recommended Marketing Strategy")
         for point in profile['marketing_points']:
             st.markdown(f"- {point}")
 
@@ -224,7 +224,7 @@ elif input_mode == "📝 Batch (Manual Entry)":
                 clusters = predict_batch(df)
                 enriched = enrich_dataframe(df, clusters)
                 
-                st.success(f"✅ Processed {len(customers)} customers")
+                st.success(f" Processed {len(customers)} customers")
                 col1, col2 = st.columns(2)
                 col1.metric("Unique Segments", enriched['Cluster'].nunique())
                 col2.metric("Most Common Segment", enriched['Segment'].mode()[0] if not enriched.empty else "N/A")
@@ -235,7 +235,7 @@ elif input_mode == "📝 Batch (Manual Entry)":
                 csv = enriched.to_csv(index=False)
                 st.download_button("💾 Download Results CSV", csv, "segmentation_results.csv", "text/csv")
                 
-                st.subheader("🔍 Detailed Recommendations (click to expand)")
+                st.subheader(" Detailed Recommendations (click to expand)")
                 for idx, row in enriched.iterrows():
                     with st.expander(f"Customer {idx+1}: Income ${row['Annual Income (k$)']}k, Spending {row['Spending Score (1-100)']}"):
                         profile = CLUSTER_PROFILES[row['Cluster']]
