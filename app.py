@@ -132,7 +132,7 @@ def enrich_dataframe(df, clusters):
 # Sidebar
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/4290/4290854.png", width=70)
-    st.title(" CONTROLS")
+    st.title("⚙️ Controls")
     input_mode = st.radio(
         "Choose input method:",
         ["✏️ Single Customer", "📝 Batch (Manual Entry)", "📂 Batch (CSV Upload)"]
@@ -143,7 +143,7 @@ with st.sidebar:
     st.caption("Capstone Project – June 2026")
 
 # Main title with improved description
-st.title(" Customer Segmentation & Marketing Engine")
+st.title("🎯 Customer Segmentation & Marketing Engine")
 st.markdown("This model helps group customers based on their **annual income** and **spending score**. Each segment receives a tailored marketing strategy.")
 
 # ==========================================
@@ -152,9 +152,10 @@ st.markdown("This model helps group customers based on their **annual income** a
 if input_mode == "✏️ Single Customer":
     col1, col2 = st.columns(2)
     with col1:
-        income = st.number_input("💰 Annual Income (k$)", min_value=0.0, max_value=20000.0, value=60.0, step=1.0)
+        # CHANGED: max_value from 200.0 to 500.0 (income in k$ -> 500k$)
+        income = st.number_input("💰 Annual Income (k$)", min_value=0.0, max_value=500.0, value=60.0, step=1.0)
     with col2:
-        spending = st.number_input("💳 Spending Score (1-100)", min_value=0.0, max_value=20000.0, value=50.0, step=1.0)
+        spending = st.number_input("💳 Spending Score (1-100)", min_value=0.0, max_value=100.0, value=50.0, step=1.0)
     
     if st.button("🔮 Predict Segment", use_container_width=True):
         input_df = pd.DataFrame([[income, spending]], columns=['Annual Income (k$)', 'Spending Score (1-100)'])
@@ -177,7 +178,7 @@ if input_mode == "✏️ Single Customer":
         for point in profile['behavior_points']:
             st.markdown(f"- {point}")
         
-        st.subheader(" Recommended Marketing Strategy")
+        st.subheader("🎯 Recommended Marketing Strategy")
         for point in profile['marketing_points']:
             st.markdown(f"- {point}")
 
@@ -207,10 +208,11 @@ elif input_mode == "📝 Batch (Manual Entry)":
                         continue
                     inc = float(parts[0].strip())
                     spend = float(parts[1].strip())
-                    if inc < 0 or inc > 20000:
-                        errors.append(f"Line {idx}: Income {inc} should be between 0 and 20000")
-                    if spend < 0 or spend > 20000:
-                        errors.append(f"Line {idx}: Spending {spend} should be between 0 and 20000")
+                    # CHANGED: income max from 200 to 500
+                    if inc < 0 or inc > 500:
+                        errors.append(f"Line {idx}: Income {inc} should be between 0 and 500")
+                    if spend < 0 or spend > 100:
+                        errors.append(f"Line {idx}: Spending {spend} should be between 0 and 100")
                     customers.append((inc, spend))
                 except ValueError:
                     errors.append(f"Line {idx}: '{line}' – invalid numbers")
@@ -224,7 +226,7 @@ elif input_mode == "📝 Batch (Manual Entry)":
                 clusters = predict_batch(df)
                 enriched = enrich_dataframe(df, clusters)
                 
-                st.success(f" Processed {len(customers)} customers")
+                st.success(f"✅ Processed {len(customers)} customers")
                 col1, col2 = st.columns(2)
                 col1.metric("Unique Segments", enriched['Cluster'].nunique())
                 col2.metric("Most Common Segment", enriched['Segment'].mode()[0] if not enriched.empty else "N/A")
@@ -235,7 +237,7 @@ elif input_mode == "📝 Batch (Manual Entry)":
                 csv = enriched.to_csv(index=False)
                 st.download_button("💾 Download Results CSV", csv, "segmentation_results.csv", "text/csv")
                 
-                st.subheader(" Detailed Recommendations (click to expand)")
+                st.subheader("🔍 Detailed Recommendations (click to expand)")
                 for idx, row in enriched.iterrows():
                     with st.expander(f"Customer {idx+1}: Income ${row['Annual Income (k$)']}k, Spending {row['Spending Score (1-100)']}"):
                         profile = CLUSTER_PROFILES[row['Cluster']]
@@ -249,7 +251,7 @@ elif input_mode == "📝 Batch (Manual Entry)":
                             st.markdown(f"- {mp}")
 
 # ==========================================
-# MODE 3: CSV UPLOAD – NOW WITH DETAILED RECOMMENDATIONS FOR EVERY CUSTOMER
+# MODE 3: CSV UPLOAD (no hard limit – any income accepted)
 # ==========================================
 else:
     st.markdown("### Upload CSV file")
@@ -285,7 +287,6 @@ else:
             
             # Detailed recommendations for ALL customers (with expanders)
             st.subheader("🔍 Detailed Recommendations for All Customers (click to expand)")
-            # Limit to first 200 to avoid performance issues, but show all if less
             max_display = len(enriched)
             for idx in range(min(max_display, len(enriched))):
                 row = enriched.iloc[idx]
@@ -296,7 +297,7 @@ else:
                     st.markdown("**Behaviour:**")
                     for bp in profile['behavior_points']:
                         st.markdown(f"- {bp}")
-                    st.markdown("**Marketing Strategy:**")
+                        st.markdown("**Marketing Strategy:**")
                     for mp in profile['marketing_points']:
                         st.markdown(f"- {mp}")
             
