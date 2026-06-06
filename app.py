@@ -2,9 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-import matplotlib.pyplot as plt
-import seaborn as sns
-import io
 
 # Page config
 st.set_page_config(page_title="Customer Segmentation – Group 19", layout="wide", initial_sidebar_state="expanded")
@@ -41,7 +38,7 @@ def load_models():
 
 kmeans, scaler = load_models()
 
-# Cluster profiles with clean, structured recommendations
+# Cluster profiles (renamed "Potential Activators" -> "High‑Income, Low‑Spend")
 CLUSTER_PROFILES = {
     0: {
         "name": "💰 Premium Spenders",
@@ -92,7 +89,7 @@ CLUSTER_PROFILES = {
         ]
     },
     3: {
-        "name": "⭐ Potential Activators",
+        "name": "👑 High‑Income, Low‑Spend",
         "color": "#8E44AD",
         "summary": "High income, low spending – untapped potential.",
         "behavior_points": [
@@ -135,7 +132,6 @@ def enrich_dataframe(df, clusters):
     df_out['Cluster'] = clusters
     df_out['Segment'] = df_out['Cluster'].map(lambda c: CLUSTER_PROFILES[c]["name"])
     df_out['Summary'] = df_out['Cluster'].map(lambda c: CLUSTER_PROFILES[c]["summary"])
-    # For detailed recommendations we'll use the points directly in display
     return df_out
 
 # Sidebar
@@ -254,7 +250,7 @@ elif input_mode == "📝 Batch (Manual Entry)":
                 csv = enriched.to_csv(index=False)
                 st.download_button("💾 Download Results CSV", csv, "segmentation_results.csv", "text/csv")
                 
-                # For each customer, show expandable details (clean)
+                # For each customer, show expandable details
                 st.subheader("🔍 Detailed Recommendations (click to expand)")
                 for idx, row in enriched.iterrows():
                     with st.expander(f"Customer {idx+1}: Income ${row['Annual Income (k$)']}k, Spending {row['Spending Score (1-100)']}"):
@@ -298,20 +294,6 @@ else:
             col2.metric("Unique Segments", enriched['Cluster'].nunique())
             col3.metric("Most Common Segment", enriched['Segment'].mode()[0] if not enriched.empty else "N/A")
             
-            # Cluster distribution chart
-            st.subheader("📊 Segment Distribution")
-            counts = enriched['Cluster'].value_counts().sort_index()
-            fig, ax = plt.subplots(figsize=(8, 4))
-            colors = [CLUSTER_PROFILES[i]['color'] for i in counts.index]
-            bars = ax.bar(counts.index, counts.values, color=colors, edgecolor='black')
-            ax.set_xlabel('Cluster')
-            ax.set_ylabel('Number of Customers')
-            ax.set_title('How customers are distributed across segments')
-            for bar, count in zip(bars, counts.values):
-                ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.5, str(count), ha='center', fontweight='bold')
-            st.pyplot(fig)
-            plt.close()
-            
             # Full table
             st.subheader("📋 Detailed Results (first 100 rows)")
             st.dataframe(enriched[['Annual Income (k$)', 'Spending Score (1-100)', 'Segment', 'Summary']].head(100), use_container_width=True)
@@ -320,7 +302,7 @@ else:
             csv_data = enriched.to_csv(index=False)
             st.download_button("💾 Download Full Results CSV", csv_data, "segmented_customers.csv", "text/csv")
             
-            # Optional: show top segment's marketing strategy
+            # Spotlight on the most common segment
             top_cluster = enriched['Cluster'].mode()[0]
             st.subheader(f"🎯 Spotlight on {CLUSTER_PROFILES[top_cluster]['name']}")
             st.markdown(f"**Summary:** {CLUSTER_PROFILES[top_cluster]['summary']}")
@@ -328,6 +310,4 @@ else:
             for mp in CLUSTER_PROFILES[top_cluster]['marketing_points']:
                 st.markdown(f"- {mp}")
 
-# Footer
-st.markdown("---")
-st.caption("Powered by K‑Means Clustering | Group 19 Capstone Project – Customer Segmentation")
+# No footer at all (removed)
