@@ -132,13 +132,13 @@ def enrich_dataframe(df, clusters):
 # Sidebar
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/4290/4290854.png", width=70)
-    st.title("⚙️ Controls")
+    st.title("CONTROLS")
     input_mode = st.radio(
         "Choose input method:",
         ["✏️ Single Customer", "📝 Batch (Manual Entry)", "📂 Batch (CSV Upload)"]
     )
     st.markdown("---")
-    st.markdown("### 👥 Group 19 Members")
+    st.markdown("### GROUP 19 MEMBERS")
     st.write("RUTH, TUNDE, MUSA, ROSELINE, MELODY, MARGARET, PROMISE")
     st.caption("Capstone Project – June 2026")
 
@@ -164,7 +164,7 @@ if input_mode == "✏️ Single Customer":
         profile = CLUSTER_PROFILES[cluster]
         
         # No mention of cluster number
-        st.success(f"### 🎯 Customer Segment: {profile['name']}")
+        st.success(f"### Customer Segment: {profile['name']}")
         
         col_a, col_b = st.columns(2)
         col_a.metric("Income", f"${income}k")
@@ -178,7 +178,7 @@ if input_mode == "✏️ Single Customer":
         for point in profile['behavior_points']:
             st.markdown(f"- {point}")
         
-        st.subheader("🎯 Recommended Marketing Strategy")
+        st.subheader(" Recommended Marketing Strategy")
         for point in profile['marketing_points']:
             st.markdown(f"- {point}")
 
@@ -190,7 +190,7 @@ elif input_mode == "📝 Batch (Manual Entry)":
     st.markdown("Format each line as: `Income, Spending`  (e.g., `60, 50`)")
     batch_text = st.text_area("Customer list", height=200, placeholder="60, 50\n90, 85\n25, 80\n88, 15\n26, 20")
     
-    if st.button("🔮 Process Batch", use_container_width=True):
+    if st.button("Process Batch", use_container_width=True):
         if not batch_text.strip():
             st.error("Please enter at least one customer.")
         else:
@@ -226,7 +226,7 @@ elif input_mode == "📝 Batch (Manual Entry)":
                 clusters = predict_batch(df)
                 enriched = enrich_dataframe(df, clusters)
                 
-                st.success(f"✅ Processed {len(customers)} customers")
+                st.success(f"Processed {len(customers)} customers")
                 col1, col2 = st.columns(2)
                 col1.metric("Unique Segments", enriched['Cluster'].nunique())
                 col2.metric("Most Common Segment", enriched['Segment'].mode()[0] if not enriched.empty else "N/A")
@@ -235,7 +235,7 @@ elif input_mode == "📝 Batch (Manual Entry)":
                 st.dataframe(enriched[['Annual Income (k$)', 'Spending Score (1-100)', 'Segment', 'Summary']], use_container_width=True)
                 
                 csv = enriched.to_csv(index=False)
-                st.download_button("💾 Download Results CSV", csv, "segmentation_results.csv", "text/csv")
+                st.download_button("Download Results CSV", csv, "segmentation_results.csv", "text/csv")
                 
                 st.subheader("🔍 Detailed Recommendations (click to expand)")
                 for idx, row in enriched.iterrows():
