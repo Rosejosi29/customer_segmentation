@@ -207,10 +207,10 @@ elif input_mode == "📝 Batch (Manual Entry)":
                         continue
                     inc = float(parts[0].strip())
                     spend = float(parts[1].strip())
-                    if inc < 0 or inc > 200:
-                        errors.append(f"Line {idx}: Income {inc} should be between 0 and 200")
-                    if spend < 0 or spend > 100:
-                        errors.append(f"Line {idx}: Spending {spend} should be between 0 and 100")
+                    if inc < 0 or inc > 20000:
+                        errors.append(f"Line {idx}: Income {inc} should be between 0 and 20000")
+                    if spend < 0 or spend > 20000:
+                        errors.append(f"Line {idx}: Spending {spend} should be between 0 and 20000")
                     customers.append((inc, spend))
                 except ValueError:
                     errors.append(f"Line {idx}: '{line}' – invalid numbers")
