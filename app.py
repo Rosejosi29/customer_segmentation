@@ -138,8 +138,7 @@ with st.sidebar:
         ["✏️ Single Customer", "📝 Batch (Manual Entry)", "📂 Batch (CSV Upload)"]
     )
     st.markdown("---")
-    st.markdown("### GROUP 19 MEMBERS")
-    st.write("RUTH, TUNDE, MUSA, ROSELINE, MELODY, MARGARET, PROMISE")
+    # Removed GROUP 19 MEMBERS and the list of names
     st.caption("Capstone Project – June 2026")
 
 # Main title with improved description
@@ -152,7 +151,6 @@ st.markdown("This model helps group customers based on their **annual income** a
 if input_mode == "✏️ Single Customer":
     col1, col2 = st.columns(2)
     with col1:
-        # CHANGED: max_value from 200.0 to 500.0 (income in k$ -> 500k$)
         income = st.number_input("💰 Annual Income (k$)", min_value=0.0, max_value=500.0, value=60.0, step=1.0)
     with col2:
         spending = st.number_input("💳 Spending Score (1-100)", min_value=0.0, max_value=100.0, value=50.0, step=1.0)
@@ -163,7 +161,6 @@ if input_mode == "✏️ Single Customer":
         cluster = clusters[0]
         profile = CLUSTER_PROFILES[cluster]
         
-        # No mention of cluster number
         st.success(f"### Customer Segment: {profile['name']}")
         
         col_a, col_b = st.columns(2)
@@ -208,7 +205,6 @@ elif input_mode == "📝 Batch (Manual Entry)":
                         continue
                     inc = float(parts[0].strip())
                     spend = float(parts[1].strip())
-                    # CHANGED: income max from 200 to 500
                     if inc < 0 or inc > 500:
                         errors.append(f"Line {idx}: Income {inc} should be between 0 and 500")
                     if spend < 0 or spend > 100:
@@ -285,7 +281,6 @@ else:
             csv_data = enriched.to_csv(index=False)
             st.download_button("💾 Download Full Results CSV", csv_data, "segmented_customers.csv", "text/csv")
             
-            # Detailed recommendations for ALL customers (with expanders)
             st.subheader("🔍 Detailed Recommendations for All Customers (click to expand)")
             max_display = len(enriched)
             for idx in range(min(max_display, len(enriched))):
@@ -297,7 +292,7 @@ else:
                     st.markdown("**Behaviour:**")
                     for bp in profile['behavior_points']:
                         st.markdown(f"- {bp}")
-                        st.markdown("**Marketing Strategy:**")
+                    st.markdown("**Marketing Strategy:**")
                     for mp in profile['marketing_points']:
                         st.markdown(f"- {mp}")
             
