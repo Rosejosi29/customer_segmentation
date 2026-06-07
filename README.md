@@ -2,15 +2,6 @@
 
 A group capstone project: apply K‑Means clustering to segment mall customers and deploy an interactive predictor with Streamlit.
 
-##  Group Members
-- RUTH
-- TUNDE
-- MUSA
-- ROSELINE
-- MELODY
-- MARGARET
-- PROMISE
-
 ## 1. Dataset
 
 **Mall Customers dataset** from Kaggle:  
