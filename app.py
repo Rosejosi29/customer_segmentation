@@ -138,7 +138,6 @@ with st.sidebar:
         ["✏️ Single Customer", "📝 Batch (Manual Entry)", "📂 Batch (CSV Upload)"]
     )
     st.markdown("---")
-    # Removed GROUP 19 MEMBERS and the list of names
     st.caption("Capstone Project – June 2026")
 
 # Main title with improved description
@@ -151,7 +150,8 @@ st.markdown("This model helps group customers based on their **annual income** a
 if input_mode == "✏️ Single Customer":
     col1, col2 = st.columns(2)
     with col1:
-        income = st.number_input("💰 Annual Income (k$)", min_value=0.0, max_value=500.0, value=60.0, step=1.0)
+        # CHANGED: max_value from 500.0 to 200.0 (income in k$)
+        income = st.number_input("💰 Annual Income (k$)", min_value=0.0, max_value=200.0, value=60.0, step=1.0)
     with col2:
         spending = st.number_input("💳 Spending Score (1-100)", min_value=0.0, max_value=100.0, value=50.0, step=1.0)
     
@@ -205,8 +205,9 @@ elif input_mode == "📝 Batch (Manual Entry)":
                         continue
                     inc = float(parts[0].strip())
                     spend = float(parts[1].strip())
-                    if inc < 0 or inc > 500:
-                        errors.append(f"Line {idx}: Income {inc} should be between 0 and 500")
+                    # CHANGED: income max from 500 to 200
+                    if inc < 0 or inc > 200:
+                        errors.append(f"Line {idx}: Income {inc} should be between 0 and 200")
                     if spend < 0 or spend > 100:
                         errors.append(f"Line {idx}: Spending {spend} should be between 0 and 100")
                     customers.append((inc, spend))
