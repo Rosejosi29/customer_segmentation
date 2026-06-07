@@ -39,12 +39,12 @@ def load_models():
 kmeans, scaler = load_models()
 
 # ==========================================
-# CORRECTED CLUSTER PROFILES (based on train.py output)
+# CORRECTED CLUSTER PROFILES (simple descriptions, no numeric averages)
 # ==========================================
 CLUSTER_PROFILES = {
     0: {
         "name": "Average Customers",
-        "summary": "Average income (~55k) and average spending (~49). Represents a significant portion of the customer base.",
+        "summary": "Average income, average spending – represents a significant portion of the customer base.",
         "behavior_points": [
             "Moderate purchasing habits",
             "Value quality and reasonable prices",
@@ -59,7 +59,7 @@ CLUSTER_PROFILES = {
     },
     1: {
         "name": "High Income, High Spending",
-        "summary": "High income (~86k) and high spending (~82) – valuable, trend‑following customers.",
+        "summary": "High income, high spending – valuable, trend‑following customers.",
         "behavior_points": [
             "Luxury oriented and brand loyal",
             "Seek exclusive experiences",
@@ -74,7 +74,7 @@ CLUSTER_PROFILES = {
     },
     2: {
         "name": "Low Income, High Spending",
-        "summary": "Low income (~25k) but high spending (~79) – possibly younger or impulsive buyers.",
+        "summary": "Low income, high spending – possibly younger or impulsive buyers.",
         "behavior_points": [
             "Highly price sensitive",
             "Impulse buyers when discounts are steep",
@@ -89,7 +89,7 @@ CLUSTER_PROFILES = {
     },
     3: {
         "name": "High Income, Low Spending",
-        "summary": "High income (~88k) but low spending (~17) – selective or frugal.",
+        "summary": "High income, low spending – selective or frugal.",
         "behavior_points": [
             "Not yet engaged – may be new customers",
             "Need personalised incentives to spend",
@@ -104,7 +104,7 @@ CLUSTER_PROFILES = {
     },
     4: {
         "name": "Low Income, Low Spending",
-        "summary": "Low income (~26k) and low spending (~20) – budget‑conscious, essential buyers.",
+        "summary": "Low income, low spending – budget‑conscious, essential buyers.",
         "behavior_points": [
             "Need‑based purchasing only",
             "Price is the main decision factor",
