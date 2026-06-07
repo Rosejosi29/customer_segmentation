@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
+import os
 
 # Page config
 st.set_page_config(page_title="Customer Segmentation – Group 19", layout="wide", initial_sidebar_state="expanded")
@@ -32,11 +33,23 @@ st.markdown("""
 # Load model
 @st.cache_resource
 def load_models():
-    model = joblib.load('customer_segmentation_model.pkl')
-    scaler = joblib.load('scaler.pkl')
-    return model, scaler
+    model_path = 'customer_segmentation_model.pkl'
+    scaler_path = 'scaler.pkl'
+    try:
+        if not os.path.exists(model_path) or not os.path.exists(scaler_path):
+            raise FileNotFoundError('Model or scaler file not found')
+        model = joblib.load(model_path)
+        scaler = joblib.load(scaler_path)
+        return model, scaler
+    except Exception:
+        # Return None so the caller can show a friendly error
+        return None, None
 
 kmeans, scaler = load_models()
+
+if kmeans is None or scaler is None:
+    st.error("Model files not found: ensure 'customer_segmentation_model.pkl' and 'scaler.pkl' exist in the app folder.")
+    st.stop()
 
 # Cluster profiles – these match the clusters from train.py
 CLUSTER_PROFILES = {
@@ -118,15 +131,30 @@ CLUSTER_PROFILES = {
 }
 
 def predict_batch(data_df):
-    X = data_df[['Annual Income (k$)', 'Spending Score (1-100)']].values
+    # Accept DataFrame or array-like; ensure correct columns present
+    cols = ['Annual Income (k$)', 'Spending Score (1-100)']
+    if isinstance(data_df, (list, tuple, np.ndarray)):
+        X = np.array(data_df)
+    else:
+        if not all(c in data_df.columns for c in cols):
+            raise ValueError(f"Input must contain columns: {cols}")
+        X = data_df[cols].values
+    # ensure 2D
+    X = np.atleast_2d(X.astype(float))
     X_scaled = scaler.transform(X)
     return kmeans.predict(X_scaled)
 
 def enrich_dataframe(df, clusters):
     df_out = df.copy()
     df_out['Cluster'] = clusters
-    df_out['Segment'] = df_out['Cluster'].map(lambda c: CLUSTER_PROFILES[c]["name"])
-    df_out['Summary'] = df_out['Cluster'].map(lambda c: CLUSTER_PROFILES[c]["summary"])
+    def _get_profile_field(c, field):
+        try:
+            return CLUSTER_PROFILES[int(c)][field]
+        except Exception:
+            return 'Unknown'
+
+    df_out['Segment'] = df_out['Cluster'].map(lambda c: _get_profile_field(c, 'name'))
+    df_out['Summary'] = df_out['Cluster'].map(lambda c: _get_profile_field(c, 'summary'))
     return df_out
 
 # Sidebar
@@ -159,7 +187,6 @@ if input_mode == "✏️ Single Customer":
         clusters = predict_batch(input_df)
         cluster = clusters[0]
         profile = CLUSTER_PROFILES[cluster]
-        
         st.success(f"### Customer Segment: {profile['name']}")
         
         col_a, col_b = st.columns(2)
@@ -169,6 +196,17 @@ if input_mode == "✏️ Single Customer":
         st.markdown("---")
         st.subheader("📌 Segment Summary")
         st.info(profile['summary'])
+
+        # Show centroid for the assigned cluster (converted back to original scale)
+        try:
+            centroids = kmeans.cluster_centers_
+            centroid_orig = centroids[int(cluster)] * scaler.scale_ + scaler.mean_
+            c_income = centroid_orig[0]
+            c_spend = centroid_orig[1]
+            st.caption(f"Cluster centroid ≈ Income: {c_income:.1f}k$, Spending: {c_spend:.1f}")
+        except Exception:
+            # ignore if scaler doesn't have attributes
+            pass
         
         st.subheader("🛒 Spending Behaviour")
         for point in profile['behavior_points']:
