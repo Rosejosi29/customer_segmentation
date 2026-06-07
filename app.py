@@ -38,7 +38,7 @@ def load_models():
 
 kmeans, scaler = load_models()
 
-# Cluster profiles (no cluster numbers shown to users)
+# Cluster profiles – these match the clusters from train.py
 CLUSTER_PROFILES = {
     0: {
         "name": "💰 Premium Spenders",
@@ -124,7 +124,7 @@ def predict_batch(data_df):
 
 def enrich_dataframe(df, clusters):
     df_out = df.copy()
-    df_out['Cluster'] = clusters  # keep internally, not shown to user
+    df_out['Cluster'] = clusters
     df_out['Segment'] = df_out['Cluster'].map(lambda c: CLUSTER_PROFILES[c]["name"])
     df_out['Summary'] = df_out['Cluster'].map(lambda c: CLUSTER_PROFILES[c]["summary"])
     return df_out
@@ -140,7 +140,7 @@ with st.sidebar:
     st.markdown("---")
     st.caption("Capstone Project – June 2026")
 
-# Main title with improved description
+# Main title
 st.title("🎯 Customer Segmentation & Marketing Engine")
 st.markdown("This model helps group customers based on their **annual income** and **spending score**. Each segment receives a tailored marketing strategy.")
 
@@ -150,7 +150,6 @@ st.markdown("This model helps group customers based on their **annual income** a
 if input_mode == "✏️ Single Customer":
     col1, col2 = st.columns(2)
     with col1:
-        # CHANGED: max_value from 500.0 to 200.0 (income in k$)
         income = st.number_input("💰 Annual Income (k$)", min_value=0.0, max_value=200.0, value=60.0, step=1.0)
     with col2:
         spending = st.number_input("💳 Spending Score (1-100)", min_value=0.0, max_value=100.0, value=50.0, step=1.0)
@@ -175,7 +174,7 @@ if input_mode == "✏️ Single Customer":
         for point in profile['behavior_points']:
             st.markdown(f"- {point}")
         
-        st.subheader(" Recommended Marketing Strategy")
+        st.subheader("🎯 Recommended Marketing Strategy")
         for point in profile['marketing_points']:
             st.markdown(f"- {point}")
 
@@ -205,7 +204,6 @@ elif input_mode == "📝 Batch (Manual Entry)":
                         continue
                     inc = float(parts[0].strip())
                     spend = float(parts[1].strip())
-                    # CHANGED: income max from 500 to 200
                     if inc < 0 or inc > 200:
                         errors.append(f"Line {idx}: Income {inc} should be between 0 and 200")
                     if spend < 0 or spend > 100:
@@ -283,9 +281,7 @@ else:
             st.download_button("💾 Download Full Results CSV", csv_data, "segmented_customers.csv", "text/csv")
             
             st.subheader("🔍 Detailed Recommendations for All Customers (click to expand)")
-            max_display = len(enriched)
-            for idx in range(min(max_display, len(enriched))):
-                row = enriched.iloc[idx]
+            for idx, row in enriched.iterrows():
                 with st.expander(f"Customer {idx+1}: Income ${row['Annual Income (k$)']}k, Spending {row['Spending Score (1-100)']}"):
                     profile = CLUSTER_PROFILES[row['Cluster']]
                     st.markdown(f"**Segment:** {profile['name']}")
