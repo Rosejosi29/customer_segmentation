@@ -1,61 +1,22 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import joblib
-import os
-
-# Page config
-st.set_page_config(page_title="Customer Segmentation – Group 19", layout="wide", initial_sidebar_state="expanded")
-
-# Custom CSS for cleaner layout
-st.markdown("""
-<style>
-    .stExpander {
-        border: 1px solid #e0e0e0;
-        border-radius: 10px;
-        margin-bottom: 10px;
-    }
-    .recommendation-card {
-        background-color: #f9f9fb;
-        padding: 15px;
-        border-radius: 12px;
-        border-left: 5px solid #4CAF50;
-        margin: 10px 0;
-    }
-    .metric-number {
-        font-size: 2rem;
-        font-weight: bold;
-        color: #1E88E5;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# Load model
-@st.cache_resource
-def load_models():
-    model_path = 'customer_segmentation_model.pkl'
-    scaler_path = 'scaler.pkl'
-    try:
-        if not os.path.exists(model_path) or not os.path.exists(scaler_path):
-            raise FileNotFoundError('Model or scaler file not found')
-        model = joblib.load(model_path)
-        scaler = joblib.load(scaler_path)
-        return model, scaler
-    except Exception:
-        # Return None so the caller can show a friendly error
-        return None, None
-
-kmeans, scaler = load_models()
-
-if kmeans is None or scaler is None:
-    st.error("Model files not found: ensure 'customer_segmentation_model.pkl' and 'scaler.pkl' exist in the app folder.")
-    st.stop()
-
-# Cluster profiles – these match the clusters from train.py
 CLUSTER_PROFILES = {
     0: {
-        "name": "💰 Premium Spenders",
-        "summary": "High income, high spending – your most valuable segment.",
+        "name": "🟣 Average Customers",
+        "summary": "Average income, average spending – a significant portion of the customer base.",
+        "behavior_points": [
+            "Moderate purchasing habits",
+            "Respond to value and quality",
+            "Can be upsold with relevant offers"
+        ],
+        "marketing_points": [
+            "Engage with seasonal campaigns",
+            "Referral rewards (e.g., refer a friend for 10% off)",
+            "Email newsletters with mid‑range products",
+            "Loyalty points on every purchase"
+        ]
+    },
+    1: {
+        "name": "🟡 High Income, High Spending",
+        "summary": "High income, high spending – your most valuable, trend‑following customers.",
         "behavior_points": [
             "Luxury oriented and brand loyal",
             "Seek exclusive experiences",
@@ -68,24 +29,9 @@ CLUSTER_PROFILES = {
             "Invite‑only events"
         ]
     },
-    1: {
-        "name": "🛒 Mid-Range Shoppers",
-        "summary": "Average income, average spending – stable and large base.",
-        "behavior_points": [
-            "Value seekers – compare prices",
-            "Respond to moderate discounts",
-            "Trust peer reviews and referrals"
-        ],
-        "marketing_points": [
-            "Seasonal campaigns (e.g., summer sale, Black Friday)",
-            "Referral rewards (e.g., refer a friend and you both get 10% off)",
-            "Email newsletters with curated mid‑range products",
-            "Loyalty points on every purchase"
-        ]
-    },
     2: {
-        "name": "🏷️ Discount Seekers",
-        "summary": "Low income, high spending – deal hunters.",
+        "name": "🟢 Low Income, High Spending",
+        "summary": "Low income but high spending – possibly impulsive or category‑focused buyers.",
         "behavior_points": [
             "Highly price sensitive",
             "Impulse buyers when discounts are steep",
@@ -99,8 +45,8 @@ CLUSTER_PROFILES = {
         ]
     },
     3: {
-        "name": "👑 High‑Income, Low‑Spend",
-        "summary": "High income, low spending – untapped potential.",
+        "name": "🔴 High Income, Low Spending",
+        "summary": "High income, low spending – very selective or frugal.",
         "behavior_points": [
             "Not yet engaged – may be new customers",
             "Need personalised incentives to spend",
@@ -114,8 +60,8 @@ CLUSTER_PROFILES = {
         ]
     },
     4: {
-        "name": "📉 Budget Conscious",
-        "summary": "Low income, low spending – essential buyers.",
+        "name": "🔵 Low Income, Low Spending",
+        "summary": "Low income, low spending – budget‑conscious customers.",
         "behavior_points": [
             "Need‑based purchasing only",
             "Price is the main decision factor",
@@ -129,209 +75,3 @@ CLUSTER_PROFILES = {
         ]
     }
 }
-
-def predict_batch(data_df):
-    # Accept DataFrame or array-like; ensure correct columns present
-    cols = ['Annual Income (k$)', 'Spending Score (1-100)']
-    if isinstance(data_df, (list, tuple, np.ndarray)):
-        X = np.array(data_df)
-    else:
-        if not all(c in data_df.columns for c in cols):
-            raise ValueError(f"Input must contain columns: {cols}")
-        X = data_df[cols].values
-    # ensure 2D
-    X = np.atleast_2d(X.astype(float))
-    X_scaled = scaler.transform(X)
-    return kmeans.predict(X_scaled)
-
-def enrich_dataframe(df, clusters):
-    df_out = df.copy()
-    df_out['Cluster'] = clusters
-    def _get_profile_field(c, field):
-        try:
-            return CLUSTER_PROFILES[int(c)][field]
-        except Exception:
-            return 'Unknown'
-
-    df_out['Segment'] = df_out['Cluster'].map(lambda c: _get_profile_field(c, 'name'))
-    df_out['Summary'] = df_out['Cluster'].map(lambda c: _get_profile_field(c, 'summary'))
-    return df_out
-
-# Sidebar
-with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/4290/4290854.png", width=70)
-    st.title("CONTROLS")
-    input_mode = st.radio(
-        "Choose input method:",
-        ["✏️ Single Customer", "📝 Batch (Manual Entry)", "📂 Batch (CSV Upload)"]
-    )
-    st.markdown("---")
-    st.caption("Capstone Project – June 2026")
-
-# Main title
-st.title("🎯 Customer Segmentation & Marketing Engine")
-st.markdown("This model helps group customers based on their **annual income** and **spending score**. Each segment receives a tailored marketing strategy.")
-
-# ==========================================
-# MODE 1: SINGLE CUSTOMER
-# ==========================================
-if input_mode == "✏️ Single Customer":
-    col1, col2 = st.columns(2)
-    with col1:
-        income = st.number_input("💰 Annual Income (k$)", min_value=0.0, max_value=200.0, value=60.0, step=1.0)
-    with col2:
-        spending = st.number_input("💳 Spending Score (1-100)", min_value=0.0, max_value=100.0, value=50.0, step=1.0)
-    
-    if st.button("🔮 Predict Segment", use_container_width=True):
-        input_df = pd.DataFrame([[income, spending]], columns=['Annual Income (k$)', 'Spending Score (1-100)'])
-        clusters = predict_batch(input_df)
-        cluster = clusters[0]
-        profile = CLUSTER_PROFILES[cluster]
-        st.success(f"### Customer Segment: {profile['name']}")
-        
-        col_a, col_b = st.columns(2)
-        col_a.metric("Income", f"${income}k")
-        col_b.metric("Spending Score", f"{spending}/100")
-        
-        st.markdown("---")
-        st.subheader("📌 Segment Summary")
-        st.info(profile['summary'])
-
-        # Show centroid for the assigned cluster (converted back to original scale)
-        try:
-            centroids = kmeans.cluster_centers_
-            centroid_orig = centroids[int(cluster)] * scaler.scale_ + scaler.mean_
-            c_income = centroid_orig[0]
-            c_spend = centroid_orig[1]
-            st.caption(f"Cluster centroid ≈ Income: {c_income:.1f}k$, Spending: {c_spend:.1f}")
-        except Exception:
-            # ignore if scaler doesn't have attributes
-            pass
-        
-        st.subheader("🛒 Spending Behaviour")
-        for point in profile['behavior_points']:
-            st.markdown(f"- {point}")
-        
-        st.subheader("🎯 Recommended Marketing Strategy")
-        for point in profile['marketing_points']:
-            st.markdown(f"- {point}")
-
-# ==========================================
-# MODE 2: BATCH MANUAL (TEXT AREA)
-# ==========================================
-elif input_mode == "📝 Batch (Manual Entry)":
-    st.markdown("### Enter multiple customers (one per line)")
-    st.markdown("Format each line as: `Income, Spending`  (e.g., `60, 50`)")
-    batch_text = st.text_area("Customer list", height=200, placeholder="60, 50\n90, 85\n25, 80\n88, 15\n26, 20")
-    
-    if st.button("Process Batch", use_container_width=True):
-        if not batch_text.strip():
-            st.error("Please enter at least one customer.")
-        else:
-            lines = batch_text.strip().split('\n')
-            customers = []
-            errors = []
-            for idx, line in enumerate(lines, 1):
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    parts = line.split(',')
-                    if len(parts) != 2:
-                        errors.append(f"Line {idx}: '{line}' – use exactly two numbers separated by comma")
-                        continue
-                    inc = float(parts[0].strip())
-                    spend = float(parts[1].strip())
-                    if inc < 0 or inc > 200:
-                        errors.append(f"Line {idx}: Income {inc} should be between 0 and 200")
-                    if spend < 0 or spend > 100:
-                        errors.append(f"Line {idx}: Spending {spend} should be between 0 and 100")
-                    customers.append((inc, spend))
-                except ValueError:
-                    errors.append(f"Line {idx}: '{line}' – invalid numbers")
-            
-            if errors:
-                for err in errors:
-                    st.warning(err)
-            
-            if customers:
-                df = pd.DataFrame(customers, columns=['Annual Income (k$)', 'Spending Score (1-100)'])
-                clusters = predict_batch(df)
-                enriched = enrich_dataframe(df, clusters)
-                
-                st.success(f"Processed {len(customers)} customers")
-                col1, col2 = st.columns(2)
-                col1.metric("Unique Segments", enriched['Cluster'].nunique())
-                col2.metric("Most Common Segment", enriched['Segment'].mode()[0] if not enriched.empty else "N/A")
-                
-                st.subheader("📋 Quick View")
-                st.dataframe(enriched[['Annual Income (k$)', 'Spending Score (1-100)', 'Segment', 'Summary']], use_container_width=True)
-                
-                csv = enriched.to_csv(index=False)
-                st.download_button("Download Results CSV", csv, "segmentation_results.csv", "text/csv")
-                
-                st.subheader("🔍 Detailed Recommendations (click to expand)")
-                for idx, row in enriched.iterrows():
-                    with st.expander(f"Customer {idx+1}: Income ${row['Annual Income (k$)']}k, Spending {row['Spending Score (1-100)']}"):
-                        profile = CLUSTER_PROFILES[row['Cluster']]
-                        st.markdown(f"**Segment:** {profile['name']}")
-                        st.markdown(f"**Summary:** {profile['summary']}")
-                        st.markdown("**Behaviour:**")
-                        for bp in profile['behavior_points']:
-                            st.markdown(f"- {bp}")
-                        st.markdown("**Marketing Strategy:**")
-                        for mp in profile['marketing_points']:
-                            st.markdown(f"- {mp}")
-
-# ==========================================
-# MODE 3: CSV UPLOAD (no hard limit – any income accepted)
-# ==========================================
-else:
-    st.markdown("### Upload CSV file")
-    st.markdown("Required columns: **`Annual Income (k$)`** and **`Spending Score (1-100)`**")
-    uploaded = st.file_uploader("Choose a CSV file", type="csv")
-    
-    if uploaded is not None:
-        df = pd.read_csv(uploaded)
-        required = ['Annual Income (k$)', 'Spending Score (1-100)']
-        missing = [c for c in required if c not in df.columns]
-        if missing:
-            st.error(f"Missing columns: {missing}")
-        else:
-            st.subheader("Preview (first 5 rows)")
-            st.dataframe(df.head(), use_container_width=True)
-            
-            with st.spinner("Segmenting customers..."):
-                clusters = predict_batch(df)
-                enriched = enrich_dataframe(df, clusters)
-            
-            st.success(f"✅ Segmentation complete! Processed {len(enriched)} customers.")
-            
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Total Customers", len(enriched))
-            col2.metric("Unique Segments", enriched['Cluster'].nunique())
-            col3.metric("Most Common Segment", enriched['Segment'].mode()[0] if not enriched.empty else "N/A")
-            
-            st.subheader("📋 Quick View (first 100 rows)")
-            st.dataframe(enriched[['Annual Income (k$)', 'Spending Score (1-100)', 'Segment', 'Summary']].head(100), use_container_width=True)
-            
-            csv_data = enriched.to_csv(index=False)
-            st.download_button("💾 Download Full Results CSV", csv_data, "segmented_customers.csv", "text/csv")
-            
-            st.subheader("🔍 Detailed Recommendations for All Customers (click to expand)")
-            for idx, row in enriched.iterrows():
-                with st.expander(f"Customer {idx+1}: Income ${row['Annual Income (k$)']}k, Spending {row['Spending Score (1-100)']}"):
-                    profile = CLUSTER_PROFILES[row['Cluster']]
-                    st.markdown(f"**Segment:** {profile['name']}")
-                    st.markdown(f"**Summary:** {profile['summary']}")
-                    st.markdown("**Behaviour:**")
-                    for bp in profile['behavior_points']:
-                        st.markdown(f"- {bp}")
-                    st.markdown("**Marketing Strategy:**")
-                    for mp in profile['marketing_points']:
-                        st.markdown(f"- {mp}")
-            
-            if len(enriched) > 200:
-                st.info(f"Showing first 200 customers. Download the CSV for full details on all {len(enriched)} customers.")
-
-# No footer
